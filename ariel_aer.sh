@@ -371,6 +371,7 @@ fi
 
 declare -A NVME_MAP
 declare -A ROOT_MAP
+declare -A SN_MAP
 
 echo -e "\n\e[33mFound AER events on the following PCIe paths:\e[0m"
 
@@ -460,6 +461,7 @@ for PCI_ADDR in "${AER_PCI_LIST[@]}"; do
         # Save mappings for the interactive blink test
         NVME_MAP[$PCI_ADDR]=$NVME_DEV
         ROOT_MAP[$PCI_ADDR]=$ROOT_COMPLEX
+        SN_MAP[$PCI_ADDR]=$SN
     else
         echo -e " - \e[1;31m$PCI_ADDR\e[0m -> (No NVMe device found. The drive might be disconnected or failed)"
     fi
@@ -608,8 +610,13 @@ while true; do
     i=1
     for pci_addr in "${PCI_LIST[@]}"; do
         nvme_dev=${NVME_MAP[$pci_addr]}
+        serial=${SN_MAP[$pci_addr]}
         if [ -n "$nvme_dev" ]; then
-            echo "  [$i] $pci_addr -> /dev/$nvme_dev"
+            if [ -n "$serial" ] && [ "$serial" != "Unknown" ]; then
+                echo "  [$i] $pci_addr -> /dev/$nvme_dev (SN: $serial)"
+            else
+                echo "  [$i] $pci_addr -> /dev/$nvme_dev"
+            fi
         else
             echo "  [$i] $pci_addr -> (No NVMe device found)"
         fi
